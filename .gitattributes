@@ -1,0 +1,15 @@
+* text=auto
+
+# Keep source files with LF in the repository
+*.py text eol=lf
+*.mako text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ini text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Windows scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
