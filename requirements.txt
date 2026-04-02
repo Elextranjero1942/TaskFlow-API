@@ -3,3 +3,4 @@ uvicorn==0.42.0
 SQLAlchemy==2.0.41
 python-dotenv==1.1.1
 psycopg[binary]==3.2.9
+passlib[argon2]==1.7.4
