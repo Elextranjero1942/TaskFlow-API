@@ -13,4 +13,5 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
     tasks = relationship("Task", back_populates="owner")
