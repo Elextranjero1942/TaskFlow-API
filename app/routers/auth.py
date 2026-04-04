@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -21,6 +21,7 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         email=user_data.email,
         password_hash=hash_password(user_data.password)
     )
+
     try:
         db.add(new_user)
         db.commit()
