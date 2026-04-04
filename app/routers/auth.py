@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserRegister, UserLogin, UserResponse
+from app.schemas.user import UserRegister, UserResponse
 from app.auth.password import hash_password, verify_password
 from app.auth.jwt import create_access_token
 
@@ -19,16 +21,20 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
         email=user_data.email,
         password_hash=hash_password(user_data.password)
     )
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except SQLAlchemyError:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="No se pudo actualizar el perfil")
+    
     return new_user
 
 @router.post("/login")
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == user_data.email).first()
-    if not user or not verify_password(user_data.password, user.password_hash):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     
     token = create_access_token({"sub": str(user.id)})

@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
+from uuid import UUID
 from datetime import datetime
 
 class TaskCreate(BaseModel):
@@ -11,12 +12,11 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
 
 class TaskResponse(BaseModel):
-    id: str
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
     title: str
     description: Optional[str] = None
     is_completed: bool
     created_at: datetime
-    update_at: datetime
-
-    class Config:
-        from_attributes = True
+    updated_at: datetime
