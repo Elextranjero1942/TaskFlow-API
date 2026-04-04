@@ -17,7 +17,9 @@ def get_profile(current_user: User = Depends(get_current_user)):
     }
 
 @router.patch("/me", response_model=UserUpdate)
-def update_profile(user_update: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def update_profile(user_update: UserUpdate, 
+                current_user: User = Depends(get_current_user), 
+                db: Session = Depends(get_db)):
     data = user_update.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(400, detail="No enviaste datos")
