@@ -4,11 +4,14 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 from app.database import get_db
 from app.models.user import User
+from app.models.task import Task
 from app.auth.jwt import verify_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme),
+                    db: Session = Depends(get_db)):
+    
     payload = verify_token(token)
     if payload is None:
         raise HTTPException(status_code=401, detail="El token es invalido o esta expirado")
@@ -19,8 +22,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except (TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Token invalido")
 
-    user = db.query(User).filter(User.id == user_uuid).first()
+    user = db.query(User).filter(
+        User.id == user_uuid).first()
+    
     if user is None:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     
     return user
+
+def get_current_task(id: UUID,
+                    current_user: User = Depends(get_current_user),
+                    db: Session = Depends(get_db)
+    ):
+    
+    current_task = db.query(Task).filter(
+                    Task.id == id,
+                    Task.user_id == current_user.id,
+    ).first()
+
+    if not current_task:
+        raise HTTPException(status_code=404, detail="No se encuentro la tarea")
+    
+    return current_task

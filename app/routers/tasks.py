@@ -1,14 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from app.auth.dependencies import get_current_user, get_db
-from app.schemas.task import TaskResponse, TaskCreate
+from uuid import UUID
+from app.auth.dependencies import get_db, get_current_user, get_current_task
+from app.schemas.task import TaskResponse, TaskCreate, TaskUpdate
 from app.models.user import User
 from app.models.task import Task
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
-@router.get("", response_model=list[TaskResponse])
+@router.get("/", response_model=list[TaskResponse])
 def get_task(current_user: User = Depends(get_current_user), 
             db: Session = Depends(get_db),
             limit: int = Query(default=80, ge=1, le=100),
@@ -20,7 +21,7 @@ def get_task(current_user: User = Depends(get_current_user),
 
     return tasks
 
-@router.post("", response_model=TaskResponse, status_code=201)
+@router.post("/", response_model=TaskResponse, status_code=201)
 def create_task(task_data: TaskCreate,
                 current_user: User = Depends(get_current_user),
                 db: Session = Depends(get_db)
@@ -41,3 +42,47 @@ def create_task(task_data: TaskCreate,
             raise HTTPException(status_code=500, detail="No se pudo crear la tarea")
     
     return new_task
+
+@router.get("/{id}", response_model=TaskResponse)
+def get_task_(id: UUID,
+            db: Session = Depends(get_db),
+            current_user: User = Depends(get_current_user)):
+    task = db.query(Task).filter(
+        Task.id == id,
+        Task.user_id == current_user.id
+    ).first()
+
+    if not task:
+        raise HTTPException(status_code=404, detail="No se encuentra la tarea")
+    
+    return task
+
+@router.patch("/{id}", response_model=TaskResponse)
+def update_task(task_update: TaskUpdate,
+                current_task: Task = Depends(get_current_task),
+                db: Session = Depends(get_db)
+                ):
+
+    data = task_update.model_dump(exclude_unset=True)
+    if not data:
+        raise HTTPException(400, detail="No envisate datos")
+    
+    changes = any(
+        getattr(current_task, field) != value
+        for field, value in data.items()
+    )
+    if not changes:
+        raise HTTPException(status_code=400, detail="No hay datos para actualizar")
+
+    for field, value in data.items():
+        setattr(current_task, field, value)
+
+    try:
+        db.commit()
+        db.refresh(current_task)
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="No se pudo actualizar la tarea")
+
+    return current_task
+
