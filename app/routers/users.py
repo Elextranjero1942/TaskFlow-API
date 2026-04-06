@@ -16,10 +16,12 @@ def get_profile(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
     }
 
-@router.patch("/me", response_model=UserUpdate)
+@router.patch("/me", response_model=UserResponse)
 def update_profile(user_update: UserUpdate, 
                 current_user: User = Depends(get_current_user), 
-                db: Session = Depends(get_db)):
+                db: Session = Depends(get_db)
+                ):
+    
     data = user_update.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(400, detail="No enviaste datos")
@@ -48,10 +50,7 @@ def update_profile(user_update: UserUpdate,
         db.rollback()
         raise HTTPException(status_code=500, detail="No se pudo actualizar el perfil")
 
-    return {
-        "name": current_user.name,
-        "email": current_user.email
-    }
+    return current_user
 
 
     
