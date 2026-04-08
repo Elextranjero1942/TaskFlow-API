@@ -41,6 +41,6 @@ def get_current_task(id: UUID,
     ).first()
 
     if not current_task:
-        raise HTTPException(status_code=404, detail="No se encuentro la tarea")
+        raise HTTPException(status_code=404, detail="No se encuentra la tarea")
     
     return current_task
