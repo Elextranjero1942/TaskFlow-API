@@ -13,7 +13,8 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 def get_task(current_user: User = Depends(get_current_user), 
             db: Session = Depends(get_db),
             limit: int = Query(default=80, ge=1, le=100),
-            offset: int = Query(default=0, ge=0)):
+            offset: int = Query(default=0, ge=0)
+):
     
     tasks = db.query(Task).filter(Task.user_id == current_user.id
             ).order_by(Task.is_completed.asc(), Task.created_at.desc()
@@ -25,7 +26,7 @@ def get_task(current_user: User = Depends(get_current_user),
 def create_task(task_data: TaskCreate,
                 current_user: User = Depends(get_current_user),
                 db: Session = Depends(get_db)
-                ):
+):
     
     new_task = Task(
         user_id=current_user.id,
@@ -61,7 +62,7 @@ def get_task_(id: UUID,
 def update_task(task_update: TaskUpdate,
                 current_task: Task = Depends(get_current_task),
                 db: Session = Depends(get_db)
-                ):
+):
 
     data = task_update.model_dump(exclude_unset=True)
     if not data:
@@ -86,3 +87,18 @@ def update_task(task_update: TaskUpdate,
 
     return current_task
 
+@router.delete("/{id}", status_code=204)
+def delete_task(
+                id: UUID,
+                current_task: Task = Depends(get_current_task),
+                db: Session = Depends(get_db)
+                ):
+
+    try:
+        db.delete(current_task)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="No se pudo eliminar la tarea")
+
+    return None
