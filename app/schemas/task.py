@@ -10,6 +10,7 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    is_completed: bool
 
 class TaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
